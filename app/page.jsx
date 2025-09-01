@@ -14,6 +14,8 @@ export default function Home() {
   const [author, setAuthor] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [selectedNote, setSelectedNote] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   // Sayaç hesaplama
   useEffect(() => {
@@ -44,6 +46,23 @@ export default function Home() {
   useEffect(() => {
     fetchNotes();
   }, []);
+
+  // ESC tuşu ile modal kapatma
+  useEffect(() => {
+    const handleEsc = (event) => {
+      if (event.key === 'Escape') {
+        closeModal();
+      }
+    };
+
+    if (showModal) {
+      document.addEventListener('keydown', handleEsc);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEsc);
+    };
+  }, [showModal]);
 
   const fetchNotes = async () => {
     try {
@@ -122,6 +141,16 @@ export default function Home() {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const openNoteModal = (note) => {
+    setSelectedNote(note);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedNote(null);
   };
 
   return (
@@ -244,7 +273,11 @@ export default function Home() {
                 }
                 
                 return (
-                  <div key={note.id || `note-${index}`} className="bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-black/30 transition-all duration-200 hover:scale-105">
+                  <div 
+                    key={note.id || `note-${index}`} 
+                    className="bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-black/30 transition-all duration-200 hover:scale-105 cursor-pointer"
+                    onClick={() => openNoteModal(note)}
+                  >
                     <div className="flex justify-between items-start mb-3">
                       <span className="font-semibold text-white text-sm truncate max-w-[60%]">{note.author || 'Anonim'}</span>
                       <span className="text-white/60 text-xs">{note.timestamp ? formatDate(note.timestamp) : 'Tarih yok'}</span>
@@ -257,6 +290,36 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {/* Modal */}
+      {showModal && selectedNote && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={closeModal}>
+          <div className="bg-black/90 backdrop-blur-md rounded-2xl p-6 border border-white/20 max-w-2xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-xl font-bold text-white">Not Detayı</h3>
+              <button
+                onClick={closeModal}
+                className="text-white/60 hover:text-white text-2xl font-bold transition-colors"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex justify-between items-start">
+                <span className="font-semibold text-white text-lg">{selectedNote.author || 'Anonim'}</span>
+                <span className="text-white/60 text-sm">{selectedNote.timestamp ? formatDate(selectedNote.timestamp) : 'Tarih yok'}</span>
+              </div>
+              
+              <div className="bg-white/5 rounded-lg p-4">
+                <p className="text-white/90 leading-relaxed text-base whitespace-pre-wrap">
+                  {selectedNote.text || 'Not içeriği yok'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
