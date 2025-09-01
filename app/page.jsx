@@ -49,9 +49,25 @@ export default function Home() {
       const response = await fetch('/api/notes');
       const data = await response.json();
       
+      console.log('API Response:', data); // Debug için
+      
       // API'den gelen verinin array olup olmadığını kontrol et
       if (Array.isArray(data)) {
-        setNotes(data);
+        // Eğer data içinde JSON string'ler varsa parse et
+        const parsedData = data.map(item => {
+          if (typeof item === 'string') {
+            try {
+              return JSON.parse(item);
+            } catch (e) {
+              console.error('Frontend JSON parse error:', e);
+              return null;
+            }
+          }
+          return item;
+        }).filter(item => item !== null);
+        
+        console.log('Final parsed data:', parsedData);
+        setNotes(parsedData);
       } else {
         console.error('API geçersiz veri döndürdü:', data);
         setNotes([]); // Hata durumunda boş array kullan
@@ -156,22 +172,31 @@ export default function Home() {
         </div>
 
         {/* Notlar Listesi */}
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold text-white mb-4">Notlar</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-white mb-6">Notlar</h2>
           {!Array.isArray(notes) || notes.length === 0 ? (
             <div className="text-center text-white/60 py-8">
               Henüz not bırakılmamış. İlk notu siz bırakın!
             </div>
           ) : (
-            notes.map((note) => (
-              <div key={note.id} className="bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="font-semibold text-white">{note.author}</span>
-                  <span className="text-white/60 text-sm">{formatDate(note.timestamp)}</span>
-                </div>
-                <p className="text-white/90 leading-relaxed">{note.text}</p>
-              </div>
-            ))
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {notes.map((note, index) => {
+                // Geçersiz note objelerini filtrele
+                if (!note || typeof note !== 'object') {
+                  return null;
+                }
+                
+                return (
+                  <div key={note.id || `note-${index}`} className="bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-black/30 transition-all duration-200 hover:scale-105">
+                    <div className="flex justify-between items-start mb-3">
+                      <span className="font-semibold text-white text-sm truncate max-w-[60%]">{note.author || 'Anonim'}</span>
+                      <span className="text-white/60 text-xs">{note.timestamp ? formatDate(note.timestamp) : 'Tarih yok'}</span>
+                    </div>
+                    <p className="text-white/90 text-sm leading-relaxed overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical' }}>{note.text || 'Not içeriği yok'}</p>
+                  </div>
+                );
+              }).filter(Boolean)}
+            </div>
           )}
         </div>
       </div>

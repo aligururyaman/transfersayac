@@ -98,7 +98,18 @@ export async function GET() {
     }
     
     const redisNotes = await redisLrange('notes', 0, -1);
-    const parsedNotes = redisNotes.map(note => JSON.parse(note));
+    console.log('Redis notes raw:', redisNotes); // Debug için
+    
+    const parsedNotes = redisNotes.map(note => {
+      try {
+        return JSON.parse(note);
+      } catch (e) {
+        console.error('JSON parse error:', e, 'for note:', note);
+        return null;
+      }
+    }).filter(note => note !== null); // null değerleri filtrele
+    
+    console.log('Parsed notes:', parsedNotes); // Debug için
     return NextResponse.json(parsedNotes);
   } catch (error) {
     console.error('Redis error:', error);
