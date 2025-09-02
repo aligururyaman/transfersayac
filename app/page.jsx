@@ -22,7 +22,7 @@ export default function Home() {
     const calculateTimeLeft = () => {
       const now = new Date();
       const targetDate = new Date(now);
-      targetDate.setDate(targetDate.getDate() + 2); // 2 gün sonrası (24 saat daha)
+      targetDate.setDate(targetDate.getDate() + 1); // 
       targetDate.setHours(0, 0, 0, 0);
 
       const difference = targetDate - now;
